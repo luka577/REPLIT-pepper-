@@ -1,0 +1,476 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Pepper Store API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: peppers
+    description: Pepper product operations
+  - name: cart
+    description: Cart operations
+  - name: orders
+    description: Order operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /peppers:
+    get:
+      operationId: listPeppers
+      tags: [peppers]
+      summary: List all peppers
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: minHeat
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: maxHeat
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: List of peppers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pepper"
+
+  /peppers/featured:
+    get:
+      operationId: getFeaturedPeppers
+      tags: [peppers]
+      summary: Get featured/bestseller peppers
+      responses:
+        "200":
+          description: Featured peppers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pepper"
+
+  /peppers/categories:
+    get:
+      operationId: getPepperCategories
+      tags: [peppers]
+      summary: Get all pepper categories with counts
+      responses:
+        "200":
+          description: Pepper categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PepperCategory"
+
+  /peppers/stats:
+    get:
+      operationId: getPepperStats
+      tags: [peppers]
+      summary: Get pepper store stats (total peppers, avg heat, hottest)
+      responses:
+        "200":
+          description: Store stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PepperStats"
+
+  /peppers/{id}:
+    get:
+      operationId: getPepper
+      tags: [peppers]
+      summary: Get a single pepper by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Pepper
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pepper"
+        "404":
+          description: Not found
+
+  /cart:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Get current cart
+      responses:
+        "200":
+          description: Cart items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+    post:
+      operationId: addToCart
+      tags: [cart]
+      summary: Add item to cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToCartRequest"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+
+  /cart/{pepperId}:
+    put:
+      operationId: updateCartItem
+      tags: [cart]
+      summary: Update cart item quantity
+      parameters:
+        - in: path
+          name: pepperId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartItemRequest"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+    delete:
+      operationId: removeFromCart
+      tags: [cart]
+      summary: Remove item from cart
+      parameters:
+        - in: path
+          name: pepperId
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+
+  /cart/clear:
+    delete:
+      operationId: clearCart
+      tags: [cart]
+      summary: Clear all cart items
+      responses:
+        "200":
+          description: Empty cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CartItem"
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List all orders
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: placeOrder
+      tags: [orders]
+      summary: Place a new order from cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceOrderRequest"
+      responses:
+        "201":
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Pepper:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        heatLevel:
+          type: integer
+          description: Scoville units
+        category:
+          type: string
+          description: "mild, medium, hot, superhot"
+        price:
+          type: number
+        imageUrl:
+          type: string
+        inStock:
+          type: boolean
+        stockCount:
+          type: integer
+        isFeatured:
+          type: boolean
+        origin:
+          type: string
+        flavorProfile:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - description
+        - heatLevel
+        - category
+        - price
+        - inStock
+        - stockCount
+        - isFeatured
+        - origin
+        - flavorProfile
+        - createdAt
+
+    PepperCategory:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+        minHeat:
+          type: integer
+        maxHeat:
+          type: integer
+      required:
+        - name
+        - count
+        - minHeat
+        - maxHeat
+
+    PepperStats:
+      type: object
+      properties:
+        totalPeppers:
+          type: integer
+        avgHeatLevel:
+          type: integer
+        hottestPepper:
+          $ref: "#/components/schemas/Pepper"
+        mildestPepper:
+          $ref: "#/components/schemas/Pepper"
+        totalInStock:
+          type: integer
+      required:
+        - totalPeppers
+        - avgHeatLevel
+        - totalInStock
+
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        pepperId:
+          type: integer
+        pepper:
+          $ref: "#/components/schemas/Pepper"
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+      required:
+        - id
+        - pepperId
+        - pepper
+        - quantity
+        - subtotal
+
+    AddToCartRequest:
+      type: object
+      properties:
+        pepperId:
+          type: integer
+        quantity:
+          type: integer
+      required:
+        - pepperId
+        - quantity
+
+    UpdateCartItemRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+      required:
+        - quantity
+
+    OrderItem:
+      type: object
+      properties:
+        pepperId:
+          type: integer
+        pepperName:
+          type: string
+        quantity:
+          type: integer
+        priceAtOrder:
+          type: number
+        subtotal:
+          type: number
+      required:
+        - pepperId
+        - pepperName
+        - quantity
+        - priceAtOrder
+        - subtotal
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerAddress:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        total:
+          type: number
+        status:
+          type: string
+          description: "pending, confirmed, shipped, delivered"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - customerName
+        - customerEmail
+        - customerAddress
+        - items
+        - total
+        - status
+        - createdAt
+
+    PlaceOrderRequest:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerAddress:
+          type: string
+      required:
+        - customerName
+        - customerEmail
+        - customerAddress

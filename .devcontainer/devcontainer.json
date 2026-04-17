@@ -1,0 +1,48 @@
+{
+  "name": "Pepper Palace",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
+    "ghcr.io/devcontainers/features/postgresql:1": {
+      "version": "16"
+    }
+  },
+  "postCreateCommand": "npm install -g pnpm && pnpm install",
+  "postStartCommand": "service postgresql start && sudo -u postgres psql -c \"CREATE USER pepper_user WITH PASSWORD 'pepper_pass';\" 2>/dev/null || true && sudo -u postgres psql -c \"CREATE DATABASE pepper_db OWNER pepper_user;\" 2>/dev/null || true",
+  "forwardPorts": [3000, 5173, 5174],
+  "portsAttributes": {
+    "3000": { "label": "API Server", "onAutoForward": "notify" },
+    "5173": { "label": "Pepper Store (Web)", "onAutoForward": "openBrowser" },
+    "5174": { "label": "Component Preview", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-next",
+        "Prisma.prisma",
+        "humao.rest-client",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "typescript.preferences.importModuleSpecifier": "non-relative",
+        "tailwindCSS.experimental.classRegex": [
+          ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+          ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+        ]
+      }
+    }
+  },
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://pepper_user:pepper_pass@localhost:5432/pepper_db",
+    "SESSION_SECRET": "dev-session-secret-change-in-production",
+    "NODE_ENV": "development"
+  }
+}
